@@ -18,7 +18,3 @@ Application de gestion d'études de recherche (projets, expériences, sessions, 
 - Commits : Conventional Commits en français (feat, fix, chore, docs, refactor, test)
 - Une branche par tâche (`feature/…`, `fix/…`), fusion dans `main` avec `--no-ff`
 - Ne jamais lire ni modifier `.env` ; toute nouvelle variable va dans `.env.example`
-
-## Façon de travailler
-- Je suis en apprentissage : avant d'écrire du code, explique les concepts
-  et les choix techniques que tu utilises
