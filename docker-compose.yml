@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    # Le volume ici est un espace de stockagr géré par docker qui vit en dehors du cycle de vie des conteneurs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "8000:8000"
+    # Le volume ici est appelé bind mount , celui la relie un dossier de la machine à un dossier du conteneur,
+    # ici quand on modifie un fichier dans vscode le conteneur voit le changement immédiatement et runserver redémmarre tout seul
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
