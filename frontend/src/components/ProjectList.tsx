@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteProject, fetchProjects } from '../api/projects'
 import { STATUS_LABELS, type Project } from '../types/project'
@@ -9,11 +10,18 @@ function ProjectList() {
     queryFn: fetchProjects,
   })
 
+  // Projet dont le formulaire d'édition est ouvert ; null = mode création
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
     mutationFn: deleteProject,
     // Le cache ["projects"] est périmé : on force un nouveau GET de la liste
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+    onSuccess: (_data, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      // On ne peut plus modifier un projet qui n'existe plus
+      setEditingProject((current) => (current?.id === deletedId ? null : current))
+    },
     onError: (error) => window.alert(error.message),
   })
 
@@ -54,6 +62,9 @@ function ProjectList() {
                 <td>{STATUS_LABELS[project.status]}</td>
                 <td>{new Date(project.created_at).toLocaleDateString('fr-FR')}</td>
                 <td>
+                  <button type="button" onClick={() => setEditingProject(project)}>
+                    Modifier
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(project)}
@@ -70,10 +81,16 @@ function ProjectList() {
     )
   }
 
-  // Le formulaire reste visible quel que soit l'état de la liste (même vide)
+  // Le formulaire reste visible quel que soit l'état de la liste (même vide).
+  // La key force React à recréer le formulaire quand on change de projet,
+  // sinon useState garderait les valeurs du projet précédent.
   return (
     <>
-      <ProjectForm />
+      <ProjectForm
+        key={editingProject?.id ?? 'new'}
+        project={editingProject ?? undefined}
+        onDone={() => setEditingProject(null)}
+      />
       {content}
     </>
   )

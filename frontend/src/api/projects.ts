@@ -43,6 +43,29 @@ export async function createProject(input: ProjectInput): Promise<Project> {
   return response.json()
 }
 
+// PATCH = mise à jour partielle : DRF appelle partial_update() et ne valide
+// que les champs envoyés (contrairement à PUT qui exige tous les champs)
+export async function updateProject(
+  id: number,
+  input: Partial<ProjectInput>,
+): Promise<Project> {
+  const response = await fetch(`${API_URL}/projects/${id}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+  if (response.status === 400) {
+    throw new ValidationError(await response.json())
+  }
+
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status} lors de la modification du projet`)
+  }
+
+  return response.json()
+}
+
 export async function deleteProject(id: number): Promise<void> {
   const response = await fetch(`${API_URL}/projects/${id}/`, {
     method: 'DELETE',
