@@ -1,8 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, ValidationError } from '../api/projects'
+import { createProject, updateProject, ValidationError } from '../api/projects'
 import {
   STATUS_LABELS,
+  type Project,
   type ProjectFieldErrors,
   type ProjectInput,
   type ProjectStatus,
@@ -31,16 +32,41 @@ function FieldErrors({ messages }: { messages?: string[] }) {
   )
 }
 
-function ProjectForm() {
+type ProjectFormProps = {
+  // Projet à modifier ; absent = création
+  project?: Project
+  // Appelé après un enregistrement réussi ou une annulation en mode édition
+  onDone?: () => void
+}
+
+function ProjectForm({ project, onDone }: ProjectFormProps) {
   const queryClient = useQueryClient()
-  const [form, setForm] = useState<ProjectInput>(EMPTY_FORM)
+  const isEditing = project !== undefined
+
+  // useState ne lit cette valeur qu'au premier rendu : le parent doit changer
+  // la key du composant pour pré-remplir avec un autre projet
+  const [form, setForm] = useState<ProjectInput>(
+    isEditing
+      ? {
+          title: project.title,
+          description: project.description,
+          status: project.status,
+          start_date: project.start_date,
+        }
+      : EMPTY_FORM,
+  )
 
   const mutation = useMutation({
-    mutationFn: createProject,
+    mutationFn: (input: ProjectInput) =>
+      isEditing ? updateProject(project.id, input) : createProject(input),
     onSuccess: () => {
       // La liste est périmée : ProjectList refera son GET automatiquement
       queryClient.invalidateQueries({ queryKey: ['projects'] })
-      setForm(EMPTY_FORM)
+      if (isEditing) {
+        onDone?.()
+      } else {
+        setForm(EMPTY_FORM)
+      }
     },
   })
 
@@ -66,11 +92,14 @@ function ProjectForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Nouveau projet</h2>
+      <h2>{isEditing ? `Modifier « ${project.title} »` : 'Nouveau projet'}</h2>
 
       <FieldErrors messages={fieldErrors.non_field_errors} />
       {mutation.isError && !(mutation.error instanceof ValidationError) && (
-        <p role="alert">Impossible de créer le projet : {mutation.error.message}</p>
+        <p role="alert">
+          Impossible {isEditing ? 'de modifier' : 'de créer'} le projet :{' '}
+          {mutation.error.message}
+        </p>
       )}
 
       <div>
@@ -121,9 +150,20 @@ function ProjectForm() {
         <FieldErrors messages={fieldErrors.start_date} />
       </div>
 
-      <button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? 'Création…' : 'Créer le projet'}
-      </button>
+      {isEditing ? (
+        <>
+          <button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+          <button type="button" onClick={onDone} disabled={mutation.isPending}>
+            Annuler
+          </button>
+        </>
+      ) : (
+        <button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Création…' : 'Créer le projet'}
+        </button>
+      )}
     </form>
   )
 }
