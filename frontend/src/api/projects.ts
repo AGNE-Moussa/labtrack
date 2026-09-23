@@ -13,3 +13,14 @@ export async function fetchProjects(): Promise<Project[]> {
 
   return response.json()
 }
+
+export async function deleteProject(id: number): Promise<void> {
+  const response = await fetch(`${API_URL}/projects/${id}/`, {
+    method: 'DELETE',
+  })
+
+  // DRF répond 204 No Content : pas de corps à parser avec .json()
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status} lors de la suppression du projet`)
+  }
+}
