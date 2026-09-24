@@ -1,8 +1,11 @@
 import { createContext, useContext } from 'react'
+import type { RegisterInput } from '@/types/user'
 
 export type AuthContextValue = {
   isAuthenticated: boolean
   login: (username: string, password: string) => Promise<void>
+  // Crée le compte puis connecte directement l'utilisateur
+  register: (input: RegisterInput) => Promise<void>
   logout: () => void
 }
 

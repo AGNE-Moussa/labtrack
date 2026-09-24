@@ -1,7 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { createProject, updateProject, ValidationError } from '@/api/projects'
+import { ValidationError } from '@/api/errors'
+import { createProject, updateProject } from '@/api/projects'
+import FieldErrors from '@/components/FieldErrors'
 import { Button } from '@/components/ui/button'
 import { DialogClose, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -27,22 +29,6 @@ const EMPTY_FORM: ProjectInput = {
   description: '',
   status: 'draft',
   start_date: null,
-}
-
-function FieldErrors({ messages }: { messages?: string[] }) {
-  if (!messages) {
-    return null
-  }
-
-  return (
-    <>
-      {messages.map((message) => (
-        <p key={message} role="alert" className="text-sm text-destructive">
-          {message}
-        </p>
-      ))}
-    </>
-  )
 }
 
 type ProjectFormProps = {
@@ -103,7 +89,9 @@ function ProjectForm({ project, onDone }: ProjectFormProps) {
   }
 
   const fieldErrors: ProjectFieldErrors =
-    mutation.error instanceof ValidationError ? mutation.error.fieldErrors : {}
+    mutation.error instanceof ValidationError
+      ? (mutation.error.fieldErrors as ProjectFieldErrors)
+      : {}
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4">
