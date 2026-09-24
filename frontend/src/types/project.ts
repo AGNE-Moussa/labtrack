@@ -14,11 +14,13 @@ export type Project = {
   description: string
   status: ProjectStatus
   start_date: string | null
+  // id de l'utilisateur propriétaire, affecté par l'API (lecture seule)
+  owner: number
   created_at: string
   updated_at: string
 }
 
-// Champs envoyés à l'API (id, created_at et updated_at sont en lecture seule)
+// Champs envoyés à l'API (id, owner, created_at et updated_at sont en lecture seule)
 export type ProjectInput = Pick<Project, 'title' | 'description' | 'status' | 'start_date'>
 
 // Format d'une réponse 400 de DRF : une liste de messages par champ
