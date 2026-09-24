@@ -1,14 +1,11 @@
 # LabTrack
 
+[![CI](https://github.com/AGNE-Moussa/labtrack/actions/workflows/ci.yml/badge.svg)](https://github.com/AGNE-Moussa/labtrack/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 Application web de gestion d'études de recherche : chaque chercheur crée ses projets, les suit par statut, les recherche et les filtre. Ses données restent strictement isolées de celles des autres utilisateurs.
 
 C'est un projet d'apprentissage full-stack **Django REST Framework + React**. Je l'ai entièrement développé avec **[Claude Code](https://claude.com/claude-code)** comme binôme de programmation (voir [Construit avec Claude Code](#construit-avec-claude-code)).
-
-<!--
-Captures d'écran : ajouter les images dans docs/screenshots/ puis décommenter.
-![Liste des projets avec statistiques et filtres](docs/screenshots/projets.png)
-![Page détail d'un projet](docs/screenshots/detail.png)
--->
 
 ## Fonctionnalités
 
@@ -59,7 +56,7 @@ Principaux points d'entrée de l'API :
 Prérequis : [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ```bash
-git clone <url-du-depot> labtrack
+git clone https://github.com/AGNE-Moussa/labtrack.git
 cd labtrack
 cp .env.example .env          # puis remplacer les valeurs « a-changer »
 docker compose up -d --build
