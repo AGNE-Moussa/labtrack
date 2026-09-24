@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { useAuth } from '@/auth/AuthContext'
 import AuthCard from '@/components/AuthCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
+function LoginForm() {
   const { login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -26,8 +27,8 @@ function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
       footer={
         <>
           Pas encore de compte ?
-          <Button variant="link" className="px-1.5" onClick={onSwitchToRegister}>
-            Créer un compte
+          <Button variant="link" className="px-1.5" asChild>
+            <Link to="/register">Créer un compte</Link>
           </Button>
         </>
       }

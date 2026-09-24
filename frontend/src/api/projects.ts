@@ -1,6 +1,6 @@
 import type { Project, ProjectFieldErrors, ProjectInput } from '../types/project'
 import { apiFetch } from './auth'
-import { ValidationError } from './errors'
+import { NotFoundError, ValidationError } from './errors'
 
 export async function fetchProjects(): Promise<Project[]> {
   const response = await apiFetch('/projects/')
@@ -9,6 +9,21 @@ export async function fetchProjects(): Promise<Project[]> {
   // pour que TanStack Query passe en état "error".
   if (!response.ok) {
     throw new Error(`Erreur ${response.status} lors du chargement des projets`)
+  }
+
+  return response.json()
+}
+
+export async function fetchProject(id: number): Promise<Project> {
+  const response = await apiFetch(`/projects/${id}/`)
+
+  // L'API renvoie aussi 404 pour le projet d'un autre utilisateur
+  if (response.status === 404) {
+    throw new NotFoundError('Projet introuvable')
+  }
+
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status} lors du chargement du projet`)
   }
 
   return response.json()

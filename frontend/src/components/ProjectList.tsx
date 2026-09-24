@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { FolderOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { fetchProjects } from '@/api/projects'
 import { Button } from '@/components/ui/button'
@@ -91,7 +92,11 @@ function ProjectList() {
           <TableBody>
             {projects.map((project) => (
               <TableRow key={project.id}>
-                <TableCell className="font-medium">{project.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link to={`/projects/${project.id}`} className="hover:underline">
+                    {project.title}
+                  </Link>
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={project.status} />
                 </TableCell>

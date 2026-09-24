@@ -26,6 +26,8 @@ function DeleteProjectDialog({ project, onOpenChange, onDeleted }: DeleteProject
   const mutation = useMutation({
     mutationFn: (target: Project) => deleteProject(target.id),
     onSuccess: (_data, deleted) => {
+      // Le détail n'existe plus : on le retire du cache au lieu de le recharger (404)
+      queryClient.removeQueries({ queryKey: ['projects', deleted.id] })
       // Le cache ["projects"] est périmé : on force un nouveau GET de la liste
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       toast.success(`Projet « ${deleted.title} » supprimé`)

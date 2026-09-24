@@ -12,3 +12,11 @@ export class ValidationError<F extends FieldErrorMap = FieldErrorMap> extends Er
     this.fieldErrors = fieldErrors
   }
 }
+
+// Erreur levée sur un 404 : ressource absente ou appartenant à un autre utilisateur
+export class NotFoundError extends Error {
+  constructor(message = 'Ressource introuvable') {
+    super(message)
+    this.name = 'NotFoundError'
+  }
+}

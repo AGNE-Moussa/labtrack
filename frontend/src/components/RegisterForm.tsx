@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { ValidationError } from '@/api/errors'
 import { useAuth } from '@/auth/AuthContext'
 import AuthCard from '@/components/AuthCard'
@@ -18,7 +19,7 @@ const EMPTY_FORM: RegisterFormState = {
   passwordConfirm: '',
 }
 
-function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+function RegisterForm() {
   const { register } = useAuth()
   const [form, setForm] = useState<RegisterFormState>(EMPTY_FORM)
 
@@ -55,8 +56,8 @@ function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
       footer={
         <>
           Déjà un compte ?
-          <Button variant="link" className="px-1.5" onClick={onSwitchToLogin}>
-            Se connecter
+          <Button variant="link" className="px-1.5" asChild>
+            <Link to="/login">Se connecter</Link>
           </Button>
         </>
       }
