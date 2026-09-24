@@ -64,6 +64,11 @@ REST_FRAMEWORK = {
     ],
 }
 
+SIMPLE_JWT = {
+    # Clé dédiée à la signature des tokens (HS256 : 32 caractères minimum)
+    "SIGNING_KEY": os.environ["JWT_SIGNING_KEY"],
+}
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
