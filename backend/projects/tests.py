@@ -1,11 +1,14 @@
 from datetime import timedelta
+from io import StringIO
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from .management.commands.seed_demo import DEMO_PROJECTS
 from .models import Project
 
 User = get_user_model()
@@ -384,3 +387,24 @@ class ProjectFilterTests(APITestCase):
         response = self.client.get(self.stats_url)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class SeedDemoCommandTests(APITestCase):
+    def test_creates_demo_user_and_projects(self):
+        call_command("seed_demo", stdout=StringIO())
+
+        user = User.objects.get(username="demo")
+        self.assertTrue(user.check_password("labtrack-demo"))
+        self.assertEqual(user.projects.count(), len(DEMO_PROJECTS))
+
+    def test_is_idempotent_and_keeps_other_users_projects(self):
+        other = User.objects.create_user(username="alice", password="secret")
+        Project.objects.create(title="Projet d'Alice", owner=other)
+
+        call_command("seed_demo", stdout=StringIO())
+        call_command("seed_demo", "--password", "autre-mot-de-passe", stdout=StringIO())
+
+        demo = User.objects.get(username="demo")
+        self.assertEqual(demo.projects.count(), len(DEMO_PROJECTS))
+        self.assertTrue(demo.check_password("autre-mot-de-passe"))
+        self.assertTrue(Project.objects.filter(owner=other).exists())
