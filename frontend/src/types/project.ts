@@ -27,3 +27,26 @@ export type ProjectInput = Pick<Project, 'title' | 'description' | 'status' | 's
 export type ProjectFieldErrors = Partial<
   Record<keyof ProjectInput | 'non_field_errors', string[]>
 >
+
+// Réponse paginée de l'API (ProjectPagination côté Django)
+export type Paginated<T> = {
+  count: number
+  total_pages: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
+// Tris autorisés par ordering_fields côté Django ("-" = décroissant)
+export type ProjectOrdering = '-created_at' | 'created_at' | 'title' | '-title' | 'start_date'
+
+// Paramètres de GET /api/projects/ (reflet des query params de l'URL)
+export type ProjectListParams = {
+  page: number
+  status?: ProjectStatus
+  search?: string
+  ordering: ProjectOrdering
+}
+
+// Réponse de GET /api/projects/stats/
+export type ProjectStats = Record<ProjectStatus | 'total', number>

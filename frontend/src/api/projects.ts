@@ -1,14 +1,44 @@
-import type { Project, ProjectFieldErrors, ProjectInput } from '../types/project'
+import type {
+  Paginated,
+  Project,
+  ProjectFieldErrors,
+  ProjectInput,
+  ProjectListParams,
+  ProjectStats,
+} from '../types/project'
 import { apiFetch } from './auth'
 import { NotFoundError, ValidationError } from './errors'
 
-export async function fetchProjects(): Promise<Project[]> {
-  const response = await apiFetch('/projects/')
+export async function fetchProjects(params: ProjectListParams): Promise<Paginated<Project>> {
+  const query = new URLSearchParams({ page: String(params.page), ordering: params.ordering })
+  if (params.status) {
+    query.set('status', params.status)
+  }
+  if (params.search) {
+    query.set('search', params.search)
+  }
+
+  const response = await apiFetch(`/projects/?${query}`)
+
+  // Page hors limites (ex. : dernier projet de la dernière page supprimé)
+  if (response.status === 404) {
+    throw new NotFoundError('Page introuvable')
+  }
 
   // fetch ne rejette pas sur les erreurs HTTP : on lève nous-mêmes l'erreur
   // pour que TanStack Query passe en état "error".
   if (!response.ok) {
     throw new Error(`Erreur ${response.status} lors du chargement des projets`)
+  }
+
+  return response.json()
+}
+
+export async function fetchProjectStats(): Promise<ProjectStats> {
+  const response = await apiFetch('/projects/stats/')
+
+  if (!response.ok) {
+    throw new Error(`Erreur ${response.status} lors du chargement des statistiques`)
   }
 
   return response.json()
