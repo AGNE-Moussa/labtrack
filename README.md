@@ -99,7 +99,6 @@ L'agent écrivait le code. Je gardais les décisions : la stratégie de migratio
 
 ## Feuille de route
 
-- [ ] Démo en ligne
 - [ ] Tests frontend (Vitest + Testing Library)
 - [ ] Expériences, sessions et participants rattachés à un projet
 - [ ] Tokens dans des cookies httpOnly
