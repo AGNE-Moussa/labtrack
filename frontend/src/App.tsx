@@ -1,27 +1,19 @@
-import { useAuth } from './auth/AuthContext'
-import LoginForm from './components/LoginForm'
-import ProjectList from './components/ProjectList'
+import { useAuth } from '@/auth/AuthContext'
+import AppShell from '@/components/layout/AppShell'
+import LoginForm from '@/components/LoginForm'
+import ProjectList from '@/components/ProjectList'
 
 function App() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
-    return (
-      <main>
-        <h1>LabTrack</h1>
-        <LoginForm />
-      </main>
-    )
+    return <LoginForm />
   }
 
   return (
-    <main>
-      <h1>Projets</h1>
-      <button type="button" onClick={logout}>
-        Se déconnecter
-      </button>
+    <AppShell>
       <ProjectList />
-    </main>
+    </AppShell>
   )
 }
 

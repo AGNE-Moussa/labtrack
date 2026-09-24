@@ -1,8 +1,25 @@
 import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { deleteProject, fetchProjects } from '../api/projects'
-import { STATUS_LABELS, type Project } from '../types/project'
-import ProjectForm from './ProjectForm'
+import { useQuery } from '@tanstack/react-query'
+import { FolderOpenIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { fetchProjects } from '@/api/projects'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import type { Project } from '@/types/project'
+import DeleteProjectDialog from './DeleteProjectDialog'
+import ProjectFormDialog from './ProjectFormDialog'
+import StatusBadge from './StatusBadge'
+
+function formatDate(value: string | null): string {
+  return value ? new Date(value).toLocaleDateString('fr-FR') : '—'
+}
 
 function ProjectList() {
   const { data: projects, isPending, isError, error } = useQuery({
@@ -10,89 +27,133 @@ function ProjectList() {
     queryFn: fetchProjects,
   })
 
-  // Projet dont le formulaire d'édition est ouvert ; null = mode création
-  const [editingProject, setEditingProject] = useState<Project | null>(null)
+  // L'état "ouvert" est séparé du projet édité : le titre de la modale
+  // ne change pas pendant l'animation de fermeture
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingProject, setEditingProject] = useState<Project | undefined>()
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
 
-  const queryClient = useQueryClient()
-  const deleteMutation = useMutation({
-    mutationFn: deleteProject,
-    // Le cache ["projects"] est périmé : on force un nouveau GET de la liste
-    onSuccess: (_data, deletedId) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-      // On ne peut plus modifier un projet qui n'existe plus
-      setEditingProject((current) => (current?.id === deletedId ? null : current))
-    },
-    onError: (error) => window.alert(error.message),
-  })
+  function openCreate() {
+    setEditingProject(undefined)
+    setIsFormOpen(true)
+  }
 
-  function handleDelete(project: Project) {
-    if (window.confirm(`Supprimer le projet « ${project.title} » ?`)) {
-      deleteMutation.mutate(project.id)
-    }
+  function openEdit(project: Project) {
+    setEditingProject(project)
+    setIsFormOpen(true)
   }
 
   let content
   if (isPending) {
-    content = <p>Chargement des projets…</p>
+    content = (
+      <div className="grid gap-3">
+        {[1, 2, 3].map((row) => (
+          <Skeleton key={row} className="h-12 w-full" />
+        ))}
+      </div>
+    )
   } else if (isError) {
-    content = <p role="alert">Impossible de charger les projets : {error.message}</p>
+    content = (
+      <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-destructive">
+        Impossible de charger les projets : {error.message}
+      </p>
+    )
   } else if (projects.length === 0) {
-    content = <p>Aucun projet pour le moment.</p>
+    content = (
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-12 text-center">
+        <FolderOpenIcon className="size-10 text-muted-foreground" />
+        <div>
+          <p className="font-medium">Aucun projet pour le moment</p>
+          <p className="text-sm text-muted-foreground">
+            Créez votre première étude pour commencer.
+          </p>
+        </div>
+        <Button onClick={openCreate}>
+          <PlusIcon /> Nouveau projet
+        </Button>
+      </div>
+    )
   } else {
     content = (
-      <table>
-        <thead>
-          <tr>
-            <th>Titre</th>
-            <th>Statut</th>
-            <th>Date de création</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((project) => {
-            // Une seule mutation pour tout le tableau : variables indique
-            // quel projet est en cours de suppression
-            const isDeleting =
-              deleteMutation.isPending && deleteMutation.variables === project.id
-
-            return (
-              <tr key={project.id}>
-                <td>{project.title}</td>
-                <td>{STATUS_LABELS[project.status]}</td>
-                <td>{new Date(project.created_at).toLocaleDateString('fr-FR')}</td>
-                <td>
-                  <button type="button" onClick={() => setEditingProject(project)}>
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(project)}
-                    disabled={isDeleting}
+      <div className="rounded-xl border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Titre</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead className="hidden sm:table-cell">Début</TableHead>
+              <TableHead className="hidden sm:table-cell">Créé le</TableHead>
+              <TableHead className="text-right">
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {projects.map((project) => (
+              <TableRow key={project.id}>
+                <TableCell className="font-medium">{project.title}</TableCell>
+                <TableCell>
+                  <StatusBadge status={project.status} />
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {formatDate(project.start_date)}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {formatDate(project.created_at)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Modifier ${project.title}`}
+                    onClick={() => openEdit(project)}
                   >
-                    {isDeleting ? 'Suppression…' : 'Supprimer'}
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                    <PencilIcon />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Supprimer ${project.title}`}
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setProjectToDelete(project)}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     )
   }
 
-  // Le formulaire reste visible quel que soit l'état de la liste (même vide).
-  // La key force React à recréer le formulaire quand on change de projet,
-  // sinon useState garderait les valeurs du projet précédent.
   return (
-    <>
-      <ProjectForm
-        key={editingProject?.id ?? 'new'}
-        project={editingProject ?? undefined}
-        onDone={() => setEditingProject(null)}
-      />
+    <section className="grid gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Projets</h1>
+          <p className="text-sm text-muted-foreground">
+            {projects ? `${projects.length} étude(s) de recherche` : 'Vos études de recherche'}
+          </p>
+        </div>
+        <Button onClick={openCreate}>
+          <PlusIcon /> Nouveau projet
+        </Button>
+      </div>
+
       {content}
-    </>
+
+      <ProjectFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        project={editingProject}
+      />
+      <DeleteProjectDialog
+        project={projectToDelete}
+        onOpenChange={(open) => !open && setProjectToDelete(null)}
+      />
+    </section>
   )
 }
 
