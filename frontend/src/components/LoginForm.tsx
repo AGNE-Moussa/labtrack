@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '@/auth/AuthContext'
+import AuthCard from '@/components/AuthCard'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-function LoginForm() {
+function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
   const { login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -17,40 +21,54 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Connexion</h2>
+    <AuthCard
+      description="Connectez-vous pour accéder à vos études"
+      footer={
+        <>
+          Pas encore de compte ?
+          <Button variant="link" className="px-1.5" onClick={onSwitchToRegister}>
+            Créer un compte
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        {mutation.isError && (
+          <p role="alert" className="text-sm text-destructive">
+            {mutation.error.message}
+          </p>
+        )}
 
-      {mutation.isError && <p role="alert">{mutation.error.message}</p>}
+        <div className="grid gap-2">
+          <Label htmlFor="username">Identifiant</Label>
+          <Input
+            id="username"
+            name="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            required
+          />
+        </div>
 
-      <div>
-        <label htmlFor="username">Identifiant</label>
-        <input
-          id="username"
-          name="username"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          autoComplete="username"
-          required
-        />
-      </div>
+        <div className="grid gap-2">
+          <Label htmlFor="password">Mot de passe</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </div>
 
-      <div>
-        <label htmlFor="password">Mot de passe</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </div>
-
-      <button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? 'Connexion…' : 'Se connecter'}
-      </button>
-    </form>
+        <Button type="submit" className="w-full" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Connexion…' : 'Se connecter'}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }
 

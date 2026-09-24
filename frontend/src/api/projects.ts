@@ -1,16 +1,6 @@
 import type { Project, ProjectFieldErrors, ProjectInput } from '../types/project'
 import { apiFetch } from './auth'
-
-// Erreur levée sur un 400 : transporte les messages de validation DRF par champ.
-export class ValidationError extends Error {
-  fieldErrors: ProjectFieldErrors
-
-  constructor(fieldErrors: ProjectFieldErrors) {
-    super('Données invalides')
-    this.name = 'ValidationError'
-    this.fieldErrors = fieldErrors
-  }
-}
+import { ValidationError } from './errors'
 
 export async function fetchProjects(): Promise<Project[]> {
   const response = await apiFetch('/projects/')
@@ -32,7 +22,7 @@ export async function createProject(input: ProjectInput): Promise<Project> {
   })
 
   if (response.status === 400) {
-    throw new ValidationError(await response.json())
+    throw new ValidationError<ProjectFieldErrors>(await response.json())
   }
 
   if (!response.ok) {
@@ -55,7 +45,7 @@ export async function updateProject(
   })
 
   if (response.status === 400) {
-    throw new ValidationError(await response.json())
+    throw new ValidationError<ProjectFieldErrors>(await response.json())
   }
 
   if (!response.ok) {
