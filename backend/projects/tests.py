@@ -159,3 +159,72 @@ class TokenAPITests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ProjectIsolationTests(APITestCase):
+    def setUp(self):
+        self.alice = User.objects.create_user(username="alice", password="secret")
+        self.bob = User.objects.create_user(username="bob", password="secret")
+
+        self.alice_project = Project.objects.create(
+            title="Étude d'Alice", owner=self.alice
+        )
+        self.bob_project = Project.objects.create(
+            title="Étude de Bob",
+            description="Protocole confidentiel",
+            status=Project.Status.ACTIVE,
+            owner=self.bob,
+        )
+        self.list_url = reverse("project-list")
+        self.alice_detail_url = reverse(
+            "project-detail", args=[self.alice_project.id]
+        )
+        self.bob_detail_url = reverse("project-detail", args=[self.bob_project.id])
+
+        self.client.force_authenticate(self.alice)
+
+    def test_list_excludes_other_users_projects(self):
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [project["id"] for project in response.data]
+        self.assertIn(self.alice_project.id, ids)
+        self.assertNotIn(self.bob_project.id, ids)
+
+    def test_retrieve_other_users_project_returns_404(self):
+        response = self.client.get(self.bob_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_patch_other_users_project_returns_404_and_leaves_it_unchanged(self):
+        response = self.client.patch(
+            self.bob_detail_url,
+            {"title": "Piratage", "status": Project.Status.CLOSED},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.bob_project.refresh_from_db()
+        self.assertEqual(self.bob_project.title, "Étude de Bob")
+        self.assertEqual(self.bob_project.status, Project.Status.ACTIVE)
+        self.assertEqual(self.bob_project.owner, self.bob)
+
+    def test_delete_other_users_project_returns_404_and_keeps_it(self):
+        response = self.client.delete(self.bob_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Project.objects.filter(id=self.bob_project.id).exists())
+
+    def test_unauthenticated_list_returns_401(self):
+        self.client.force_authenticate(None)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_detail_returns_401(self):
+        self.client.force_authenticate(None)
+
+        response = self.client.get(self.alice_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
