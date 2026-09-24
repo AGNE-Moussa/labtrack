@@ -63,6 +63,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # Utilisés par les vues qui déclarent un throttle_scope
+    "DEFAULT_THROTTLE_RATES": {
+        "register": "10/hour",
+    },
 }
 
 SIMPLE_JWT = {
@@ -127,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr'
 
 TIME_ZONE = 'UTC'
 
